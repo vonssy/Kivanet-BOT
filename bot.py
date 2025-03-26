@@ -170,7 +170,7 @@ class Kivanet:
                 return None
         
     async def user_info(self, token: str, proxy=None, retries=5):
-        url = "https://app.kivanet.com/api/user/getMyAccountInfo"
+        url = "https://app.kivanet.com/api/user/getSignInfo"
         headers = {
             **self.headers,
             "Authorization": token,
@@ -279,7 +279,7 @@ class Kivanet:
             balance = "Unknown"
             user = await self.user_info(token, proxy)
             if user:
-                balance = user.get("balance")
+                balance = user.get("allAccount", 0)
 
             self.log(
                 f"{Fore.CYAN+Style.BRIGHT}Balance   :{Style.RESET_ALL}"
@@ -287,7 +287,7 @@ class Kivanet:
             )
 
             mining = await self.start_mining(token, proxy)
-            if mining:
+            if mining and mining.get("state", False):
                 self.log(
                     f"{Fore.CYAN+Style.BRIGHT}Mining    :{Style.RESET_ALL}"
                     f"{Fore.GREEN+Style.BRIGHT} Started {Style.RESET_ALL}"
