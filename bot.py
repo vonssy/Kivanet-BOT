@@ -171,14 +171,16 @@ class Kivanet:
         
     async def user_info(self, token: str, proxy=None, retries=5):
         url = "https://app.kivanet.com/api/user/getSignInfo"
+        data = json.dumps({"isTg":"1"})
         headers = {
             **self.headers,
             "Authorization": token,
+            "Content-Length": str(len(data)),
             "Content-Type": "application/json",
         }
         for attempt in range(retries):
             try:
-                response = await asyncio.to_thread(requests.get, url=url, headers=headers, proxy=proxy, timeout=120, impersonate="safari15_5")
+                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxy=proxy, timeout=120, impersonate="safari15_5")
                 response.raise_for_status()
                 result = response.json()
                 return result['object']
@@ -190,15 +192,16 @@ class Kivanet:
             
     async def start_mining(self, token: str, proxy=None, retries=5):
         url = "https://app.kivanet.com/api/user/sign"
+        data = json.dumps({"isTg":"1"})
         headers = {
             **self.headers,
             "Authorization": token,
-            "Content-Length": "2",
+            "Content-Length": str(len(data)),
             "Content-Type": "application/json",
         }
         for attempt in range(retries):
             try:
-                response = await asyncio.to_thread(requests.post, url=url, headers=headers, json={}, proxy=proxy, timeout=120, impersonate="safari15_5")
+                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxy=proxy, timeout=120, impersonate="safari15_5")
                 response.raise_for_status()
                 return response.json()
             except Exception as e:
