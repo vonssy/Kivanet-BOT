@@ -2,16 +2,17 @@
 Kiva Network BOT
 
 - Register Here : [Kiva Network](https://kivanet.com/register.html?code=AOIVAI)
-- Use Code : AOIVAI
-- Send Email : `Verify Me` to `verify@kivanet.com` With Same Registered Email
-- Login : `https://app.kivanet.com/`
+- Use Code `AOIVAI`
+- Send Email `Verify Me` to `verify@kivanet.com` With Same Registered Email
+- Login [Here](https://app.kivanet.com/)
 
 ## Features
 
   - Auto Get Account Information
-  - Auto Run With [Monosans](https://raw.githubusercontent.com/monosans/proxy-list/main/proxies/all.txt) Proxy - Choose 1
-  - Auto Run With Private Proxy - Choose 2
-  - Auto Run Without Proxy - Choose 3
+  - Auto Run With [Monosans](https://raw.githubusercontent.com/monosans/proxy-list/main/proxies/all.txt) Proxy - `Choose 1`
+  - Auto Run With Private Proxy - `Choose 2`
+  - Auto Run Without Proxy - `Choose 3`
+  - Auto Rotate Invalid Proxies - `y` or `n`
   - Auto Complete Available Tasks
   - Auto Start Mining
   - Multi Accounts
@@ -38,17 +39,17 @@ Kiva Network BOT
 ## Configuration
 
 - **accounts.json:** You will find the file `accounts.json` inside the project directory. Make sure `accounts.json` contains data that matches the format expected by the script. Here are examples of file formats:
-  ```bash
-  [
-      {
-          "Email": "your_email_address 1",
-          "Password": "your_password 1"
-      },
-      {
-          "Email": "your_email_address 2",
-          "Password": "your_password 2"
-      }
-  ]
+  ```json
+    [
+        {
+            "Email": "your_email_address 1",
+            "Password": "your_password 1"
+        },
+        {
+            "Email": "your_email_address 2",
+            "Password": "your_password 2"
+        }
+    ]
   ```
 
 - **proxy.txt:** You will find the file `proxy.txt` inside the project directory. Make sure `proxy.txt` contains data that matches the format expected by the script. Here are examples of file formats:

@@ -20,6 +20,7 @@ class Kivanet:
             "Sec-Fetch-Site": "same-origin",
             "User-Agent": FakeUserAgent().random
         }
+        self.BASE_API = "https://app.kivanet.com"
         self.proxies = []
         self.proxy_index = 0
         self.account_proxies = {}
@@ -37,7 +38,7 @@ class Kivanet:
     def welcome(self):
         print(
             f"""
-        {Fore.GREEN + Style.BRIGHT}Auto Ping {Fore.BLUE + Style.BRIGHT}Kivanet - BOT
+        {Fore.GREEN + Style.BRIGHT}Auto Claim {Fore.BLUE + Style.BRIGHT}Kiva Network - BOT
             """
             f"""
         {Fore.GREEN + Style.BRIGHT}Rey? {Fore.YELLOW + Style.BRIGHT}<INI WATERMARK>
@@ -70,7 +71,7 @@ class Kivanet:
             if use_proxy_choice == 1:
                 response = await asyncio.to_thread(requests.get, "https://raw.githubusercontent.com/monosans/proxy-list/main/proxies/all.txt")
                 response.raise_for_status()
-                content = response.text()
+                content = response.text
                 with open(filename, 'w') as f:
                     f.write(content)
                 self.proxies = content.splitlines()
@@ -130,10 +131,10 @@ class Kivanet:
     def print_question(self):
         while True:
             try:
-                print("1. Run With Monosans Proxy")
-                print("2. Run With Private Proxy")
-                print("3. Run Without Proxy")
-                choose = int(input("Choose [1/2/3] -> ").strip())
+                print(f"{Fore.WHITE + Style.BRIGHT}1. Run With Monosans Proxy{Style.RESET_ALL}")
+                print(f"{Fore.WHITE + Style.BRIGHT}2. Run With Private Proxy{Style.RESET_ALL}")
+                print(f"{Fore.WHITE + Style.BRIGHT}3. Run Without Proxy{Style.RESET_ALL}")
+                choose = int(input(f"{Fore.BLUE + Style.BRIGHT}Choose [1/2/3] -> {Style.RESET_ALL}").strip())
 
                 if choose in [1, 2, 3]:
                     proxy_type = (
@@ -142,14 +143,35 @@ class Kivanet:
                         "Run Without Proxy"
                     )
                     print(f"{Fore.GREEN + Style.BRIGHT}{proxy_type} Selected.{Style.RESET_ALL}")
-                    return choose
+                    break
                 else:
                     print(f"{Fore.RED + Style.BRIGHT}Please enter either 1, 2 or 3.{Style.RESET_ALL}")
             except ValueError:
                 print(f"{Fore.RED + Style.BRIGHT}Invalid input. Enter a number (1, 2 or 3).{Style.RESET_ALL}")
+
+        rotate = False
+        if choose in [1, 2]:
+            while True:
+                rotate = input(f"{Fore.BLUE + Style.BRIGHT}Rotate Invalid Proxy? [y/n] -> {Style.RESET_ALL}").strip()
+
+                if rotate in ["y", "n"]:
+                    rotate = rotate == "y"
+                    break
+                else:
+                    print(f"{Fore.RED + Style.BRIGHT}Invalid input. Enter 'y' or 'n'.{Style.RESET_ALL}")
+
+        return choose, rotate
     
+    async def check_connection(self, proxy=None):
+        try:
+            response = await asyncio.to_thread(requests.get, url=self.BASE_API, headers={}, proxy=proxy, timeout=30, impersonate="chrome110")
+            response.raise_for_status()
+            return True
+        except Exception as e:
+            return None
+        
     async def user_login(self, email: str, password: str, proxy=None, retries=5):
-        url = "https://app.kivanet.com/api/user/login"
+        url = f"{self.BASE_API}/api/user/login"
         data = json.dumps({"email":email, "password":self.encode_password(password)})
         headers = {
             **self.headers,
@@ -159,7 +181,7 @@ class Kivanet:
         }
         for attempt in range(retries):
             try:
-                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxy=proxy, timeout=120, impersonate="safari15_5")
+                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxy=proxy, timeout=120, impersonate="chrome110")
                 response.raise_for_status()
                 result = response.json()
                 return result['object']
@@ -170,7 +192,7 @@ class Kivanet:
                 return None
         
     async def user_info(self, token: str, proxy=None, retries=5):
-        url = "https://app.kivanet.com/api/user/getSignInfo"
+        url = f"{self.BASE_API}/api/user/getSignInfo"
         data = json.dumps({"isTg":"1"})
         headers = {
             **self.headers,
@@ -180,7 +202,7 @@ class Kivanet:
         }
         for attempt in range(retries):
             try:
-                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxy=proxy, timeout=120, impersonate="safari15_5")
+                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxy=proxy, timeout=120, impersonate="chrome110")
                 response.raise_for_status()
                 result = response.json()
                 return result['object']
@@ -191,7 +213,7 @@ class Kivanet:
                 return None
             
     async def start_mining(self, token: str, proxy=None, retries=5):
-        url = "https://app.kivanet.com/api/user/sign"
+        url = f"{self.BASE_API}/api/user/sign"
         data = json.dumps({"isTg":"1"})
         headers = {
             **self.headers,
@@ -201,7 +223,7 @@ class Kivanet:
         }
         for attempt in range(retries):
             try:
-                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxy=proxy, timeout=120, impersonate="safari15_5")
+                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxy=proxy, timeout=120, impersonate="chrome110")
                 response.raise_for_status()
                 return response.json()
             except Exception as e:
@@ -211,7 +233,7 @@ class Kivanet:
                 return None
         
     async def task_lists(self, token: str, proxy=None, retries=5):
-        url = "https://app.kivanet.com/api/task/getTaskList"
+        url = f"{self.BASE_API}/api/task/getTaskList"
         data = json.dumps({"status":1})
         headers = {
             **self.headers,
@@ -221,7 +243,7 @@ class Kivanet:
         }
         for attempt in range(retries):
             try:
-                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxy=proxy, timeout=120, impersonate="safari15_5")
+                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxy=proxy, timeout=120, impersonate="chrome110")
                 response.raise_for_status()
                 result = response.json()
                 return result['object']
@@ -232,7 +254,7 @@ class Kivanet:
                 return None
         
     async def do_tasks(self, token: str, task_id: str, proxy=None, retries=5):
-        url = "https://app.kivanet.com/api/task/doTask"
+        url = f"{self.BASE_API}/api/task/doTask"
         data = json.dumps({"id":task_id})
         headers = {
             **self.headers,
@@ -242,7 +264,7 @@ class Kivanet:
         }
         for attempt in range(retries):
             try:
-                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxy=proxy, timeout=120, impersonate="safari15_5")
+                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxy=proxy, timeout=120, impersonate="chrome110")
                 response.raise_for_status()
                 return response.json()
             except Exception as e:
@@ -251,89 +273,142 @@ class Kivanet:
                     continue
                 return None
             
-    async def get_access_token(self, email: str, password: str, use_proxy: bool):
+    async def process_check_connection(self, email: str, use_proxy: bool, rotate_proxy: bool):
+        message = "Checking Connection, Wait..."
+        if use_proxy:
+            message = "Checking Proxy Connection, Wait..."
+
+        print(
+            f"{Fore.CYAN + Style.BRIGHT}[ {datetime.now().astimezone(wib).strftime('%x %X %Z')} ]{Style.RESET_ALL}"
+            f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
+            f"{Fore.YELLOW + Style.BRIGHT}{message}{Style.RESET_ALL}",
+            end="\r",
+            flush=True
+        )
+
         proxy = self.get_next_proxy_for_account(email) if use_proxy else None
-        token = None
-        while token is None:
-            token = await self.user_login(email, password, proxy)
-            if not token:
+
+        if rotate_proxy:
+            is_valid = None
+            while is_valid is None:
+                is_valid = await self.check_connection(proxy)
+                if not is_valid:
+                    self.log(
+                        f"{Fore.CYAN+Style.BRIGHT}Proxy     :{Style.RESET_ALL}"
+                        f"{Fore.WHITE+Style.BRIGHT} {proxy} {Style.RESET_ALL}"
+                        f"{Fore.MAGENTA+Style.BRIGHT}-{Style.RESET_ALL}"
+                        f"{Fore.RED+Style.BRIGHT} Not 200 OK, {Style.RESET_ALL}"
+                        f"{Fore.YELLOW+Style.BRIGHT}Rotating Proxy...{Style.RESET_ALL}"
+                    )
+                    proxy = self.rotate_proxy_for_account(email) if use_proxy else None
+                    await asyncio.sleep(5)
+                    continue
+
                 self.log(
-                    f"{Fore.CYAN+Style.BRIGHT}Status    :{Style.RESET_ALL}"
-                    f"{Fore.RED+Style.BRIGHT} Login Failed {Style.RESET_ALL}"
+                    f"{Fore.CYAN+Style.BRIGHT}Proxy     :{Style.RESET_ALL}"
+                    f"{Fore.WHITE+Style.BRIGHT} {proxy} {Style.RESET_ALL}"
+                    f"{Fore.MAGENTA+Style.BRIGHT}-{Style.RESET_ALL}"
+                    f"{Fore.GREEN+Style.BRIGHT} 200 OK {Style.RESET_ALL}                  "
                 )
-                proxy = self.rotate_proxy_for_account(email) if use_proxy else None
-                continue
-            
-            self.log(
-                f"{Fore.CYAN+Style.BRIGHT}Status    :{Style.RESET_ALL}"
-                f"{Fore.GREEN+Style.BRIGHT} Login Success {Style.RESET_ALL}"
-            )
-            return token
-            
-    async def process_accounts(self, email: str, password: str, use_proxy: bool):
-        token = await self.get_access_token(email, password, use_proxy)
-        if token:
-            proxy = self.get_next_proxy_for_account(email) if use_proxy else None
+
+                return True
+
+        is_valid = await self.check_connection(proxy)
+        if not is_valid:
             self.log(
                 f"{Fore.CYAN+Style.BRIGHT}Proxy     :{Style.RESET_ALL}"
                 f"{Fore.WHITE+Style.BRIGHT} {proxy} {Style.RESET_ALL}"
+                f"{Fore.MAGENTA+Style.BRIGHT}-{Style.RESET_ALL}"
+                f"{Fore.RED+Style.BRIGHT} Not 200 OK {Style.RESET_ALL}          "
             )
+            return False
+        
+        self.log(
+            f"{Fore.CYAN+Style.BRIGHT}Proxy     :{Style.RESET_ALL}"
+            f"{Fore.WHITE+Style.BRIGHT} {proxy} {Style.RESET_ALL}"
+            f"{Fore.MAGENTA+Style.BRIGHT}-{Style.RESET_ALL}"
+            f"{Fore.GREEN+Style.BRIGHT} 200 OK {Style.RESET_ALL}                  "
+        )
+
+        return True
             
-            balance = "Unknown"
-            user = await self.user_info(token, proxy)
-            if user:
-                balance = user.get("allAccount", 0)
-
+    async def get_access_token(self, email: str, password: str, use_proxy: bool):
+        proxy = self.get_next_proxy_for_account(email) if use_proxy else None
+        
+        token = await self.user_login(email, password, proxy)
+        if not token:
             self.log(
-                f"{Fore.CYAN+Style.BRIGHT}Balance   :{Style.RESET_ALL}"
-                f"{Fore.WHITE+Style.BRIGHT} {balance} {Style.RESET_ALL}"
+                f"{Fore.CYAN+Style.BRIGHT}Status    :{Style.RESET_ALL}"
+                f"{Fore.RED+Style.BRIGHT} Login Failed {Style.RESET_ALL}"
             )
-
-            mining = await self.start_mining(token, proxy)
-            if mining and mining.get("state", False):
+            return None
+            
+        return token
+            
+    async def process_accounts(self, email: str, password: str, use_proxy: bool, rotate_proxy: bool):
+        is_valid = await self.process_check_connection(email, use_proxy, rotate_proxy)
+        if is_valid:
+            token = await self.get_access_token(email, password, use_proxy)
+            if token:
+                proxy = self.get_next_proxy_for_account(email) if use_proxy else None
                 self.log(
-                    f"{Fore.CYAN+Style.BRIGHT}Mining    :{Style.RESET_ALL}"
-                    f"{Fore.GREEN+Style.BRIGHT} Started {Style.RESET_ALL}"
-                )
-            else:
-                self.log(
-                    f"{Fore.CYAN+Style.BRIGHT}Mining    :{Style.RESET_ALL}"
-                    f"{Fore.RED+Style.BRIGHT} Not Started {Style.RESET_ALL}"
+                    f"{Fore.CYAN+Style.BRIGHT}Status    :{Style.RESET_ALL}"
+                    f"{Fore.GREEN+Style.BRIGHT} Login Success {Style.RESET_ALL}"
                 )
                 
-            tasks = await self.task_lists(token, proxy)
-            if tasks:
+                balance = "Unknown"
+                user = await self.user_info(token, proxy)
+                if user:
+                    balance = user.get("allAccount", 0)
+
                 self.log(
-                    f"{Fore.CYAN+Style.BRIGHT}Task Lists:{Style.RESET_ALL}"
+                    f"{Fore.CYAN+Style.BRIGHT}Balance   :{Style.RESET_ALL}"
+                    f"{Fore.WHITE+Style.BRIGHT} {balance} {Style.RESET_ALL}"
                 )
 
-                for task in tasks:
-                    if task:
-                        task_id = task.get("id")
-                        title = task.get("taskName")
-                        reward = task.get("speedAdd")
+                mining = await self.start_mining(token, proxy)
+                if mining and mining.get("state", False):
+                    self.log(
+                        f"{Fore.CYAN+Style.BRIGHT}Mining    :{Style.RESET_ALL}"
+                        f"{Fore.GREEN+Style.BRIGHT} Started {Style.RESET_ALL}"
+                    )
+                else:
+                    self.log(
+                        f"{Fore.CYAN+Style.BRIGHT}Mining    :{Style.RESET_ALL}"
+                        f"{Fore.RED+Style.BRIGHT} Not Started {Style.RESET_ALL}"
+                    )
+                    
+                tasks = await self.task_lists(token, proxy)
+                if tasks:
+                    self.log(f"{Fore.CYAN+Style.BRIGHT}Task Lists:{Style.RESET_ALL}")
 
-                        do = await self.do_tasks(token, task_id, proxy)
-                        if do:
-                            self.log(
-                                f"{Fore.CYAN + Style.BRIGHT}    ->{Style.RESET_ALL}"
-                                f"{Fore.WHITE + Style.BRIGHT} {title} {Style.RESET_ALL}"
-                                f"{Fore.GREEN + Style.BRIGHT}Is Completed{Style.RESET_ALL}"
-                                f"{Fore.MAGENTA + Style.BRIGHT} - {Style.RESET_ALL}"
-                                f"{Fore.CYAN + Style.BRIGHT}Reward{Style.RESET_ALL}"
-                                f"{Fore.WHITE + Style.BRIGHT} +{reward}% {Style.RESET_ALL}"
-                            )
-                        else:
-                            self.log(
-                                f"{Fore.CYAN + Style.BRIGHT}    ->{Style.RESET_ALL}"
-                                f"{Fore.WHITE + Style.BRIGHT} {title} {Style.RESET_ALL}"
-                                f"{Fore.RED + Style.BRIGHT}Not Completed{Style.RESET_ALL}"
-                            )
-            else:
-                self.log(
-                    f"{Fore.CYAN+Style.BRIGHT}Task Lists:{Style.RESET_ALL}"
-                    f"{Fore.YELLOW+Style.BRIGHT} No Available {Style.RESET_ALL}"
-                )
+                    for task in tasks:
+                        if task:
+                            task_id = task.get("id")
+                            title = task.get("taskName")
+                            reward = task.get("speedAdd")
+
+                            complete = await self.do_tasks(token, task_id, proxy)
+                            if complete:
+                                self.log(
+                                    f"{Fore.CYAN + Style.BRIGHT}    ->{Style.RESET_ALL}"
+                                    f"{Fore.WHITE + Style.BRIGHT} {title} {Style.RESET_ALL}"
+                                    f"{Fore.GREEN + Style.BRIGHT}Is Completed{Style.RESET_ALL}"
+                                    f"{Fore.MAGENTA + Style.BRIGHT} - {Style.RESET_ALL}"
+                                    f"{Fore.CYAN + Style.BRIGHT}Reward{Style.RESET_ALL}"
+                                    f"{Fore.WHITE + Style.BRIGHT} +{reward}% {Style.RESET_ALL}"
+                                )
+                            else:
+                                self.log(
+                                    f"{Fore.CYAN + Style.BRIGHT}    ->{Style.RESET_ALL}"
+                                    f"{Fore.WHITE + Style.BRIGHT} {title} {Style.RESET_ALL}"
+                                    f"{Fore.RED + Style.BRIGHT}Not Completed{Style.RESET_ALL}"
+                                )
+                else:
+                    self.log(
+                        f"{Fore.CYAN+Style.BRIGHT}Task Lists:{Style.RESET_ALL}"
+                        f"{Fore.YELLOW+Style.BRIGHT} No Available {Style.RESET_ALL}"
+                    )
     
     async def main(self):
         try:
@@ -342,7 +417,7 @@ class Kivanet:
                 self.log(f"{Fore.RED + Style.BRIGHT}No Accounts Loaded.{Style.RESET_ALL}")
                 return
             
-            use_proxy_choice = self.print_question()
+            use_proxy_choice, rotate_proxy = self.print_question()
 
             use_proxy = False
             if use_proxy_choice in [1, 2]:
@@ -374,7 +449,7 @@ class Kivanet:
                                 f"{Fore.WHITE + Style.BRIGHT} {self.mask_account(email)} {Style.RESET_ALL}"
                                 f"{Fore.CYAN + Style.BRIGHT}]{separator}{Style.RESET_ALL}"
                             )
-                            await self.process_accounts(email, password, use_proxy)
+                            await self.process_accounts(email, password, use_proxy, rotate_proxy)
                             await asyncio.sleep(3)
 
                 self.log(f"{Fore.CYAN + Style.BRIGHT}={Style.RESET_ALL}"*69)
@@ -403,5 +478,5 @@ if __name__ == "__main__":
         print(
             f"{Fore.CYAN + Style.BRIGHT}[ {datetime.now().astimezone(wib).strftime('%x %X %Z')} ]{Style.RESET_ALL}"
             f"{Fore.WHITE + Style.BRIGHT} | {Style.RESET_ALL}"
-            f"{Fore.RED + Style.BRIGHT}[ EXIT ] Kivanet - BOT{Style.RESET_ALL}                                       "                              
+            f"{Fore.RED + Style.BRIGHT}[ EXIT ] Kiva Network - BOT{Style.RESET_ALL}                                       "                              
         )
