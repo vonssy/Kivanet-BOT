@@ -8,19 +8,8 @@ wib = pytz.timezone('Asia/Jakarta')
 
 class Kivanet:
     def __init__(self) -> None:
-        self.headers = {
-            "Accept": "*/*",
-            "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
-            "Language": "en",
-            "Origin": "https://app.kivanet.com",
-            "Priority": "u=1, i",
-            "Referer": "https://app.kivanet.com/",
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-origin",
-            "User-Agent": FakeUserAgent().random
-        }
         self.BASE_API = "https://app.kivanet.com"
+        self.HEADERS = {}
         self.proxies = []
         self.proxy_index = 0
         self.account_proxies = {}
@@ -39,7 +28,7 @@ class Kivanet:
     def welcome(self):
         print(
             f"""
-        {Fore.GREEN + Style.BRIGHT}Auto Claim {Fore.BLUE + Style.BRIGHT}Kiva Network - BOT
+        {Fore.GREEN + Style.BRIGHT}Kiva Network {Fore.BLUE + Style.BRIGHT}Auto BOT
             """
             f"""
         {Fore.GREEN + Style.BRIGHT}Rey? {Fore.YELLOW + Style.BRIGHT}<INI WATERMARK>
@@ -70,7 +59,7 @@ class Kivanet:
         filename = "proxy.txt"
         try:
             if use_proxy_choice == 1:
-                response = await asyncio.to_thread(requests.get, "https://api.proxyscrape.com/v4/free-proxy-list/get?request=display_proxies&proxy_format=protocolipport&format=text")
+                response = await asyncio.to_thread(requests.get, "https://raw.githubusercontent.com/monosans/proxy-list/refs/heads/main/proxies/all.txt")
                 response.raise_for_status()
                 content = response.text
                 with open(filename, 'w') as f:
@@ -187,29 +176,32 @@ class Kivanet:
         return choose, rotate
     
     async def check_connection(self, proxy=None):
+        url = "https://api.ipify.org?format=json"
+        proxies = {"http":proxy, "https":proxy} if proxy else None
         try:
-            response = await asyncio.to_thread(requests.get, url=self.BASE_API, headers={}, proxy=proxy, timeout=30, impersonate="chrome110", verify=False)
+            response = await asyncio.to_thread(requests.get, url=url, proxies=proxies, timeout=30, impersonate="chrome110", verify=False)
             response.raise_for_status()
             return True
         except Exception as e:
             self.log(
                 f"{Fore.CYAN+Style.BRIGHT}Status    :{Style.RESET_ALL}"
-                f"{Fore.RED+Style.BRIGHT} Connection Not 200 OK {Style.RESET_ALL}"
+                f"{Fore.RED + Style.BRIGHT} Connection Not 200 OK {Style.RESET_ALL}"
+                f"{Fore.MAGENTA + Style.BRIGHT}-{Style.RESET_ALL}"
+                f"{Fore.YELLOW + Style.BRIGHT} {str(e)} {Style.RESET_ALL}"
             )
-        return None
+            return None
         
     async def user_login(self, email: str, password: str, proxy=None, retries=5):
         url = f"{self.BASE_API}/api/user/login"
         data = json.dumps({"email":email, "password":self.encode_password(password)})
-        headers = {
-            **self.headers,
-            "Authorization": "",
-            "Content-Length": str(len(data)),
-            "Content-Type": "application/json",
-        }
+        headers = self.HEADERS[email].copy()
+        headers["Authorization"] = ""
+        headers["Content-Length"] = str(len(data))
+        headers["Content-Type"] = "application/json"
         for attempt in range(retries):
+            proxies = {"http":proxy, "https":proxy} if proxy else None
             try:
-                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxy=proxy, timeout=120, impersonate="chrome110", verify=False)
+                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxies=proxies, timeout=60, impersonate="chrome110", verify=False)
                 response.raise_for_status()
                 return response.json()
             except Exception as e:
@@ -226,17 +218,16 @@ class Kivanet:
         return None
         
     async def user_info(self, email: str, proxy=None, retries=5):
-        url = f"{self.BASE_API}/api/user/getSignInfo"
+        url = f"{self.BASE_API}/api/user/getMyAccountInfo"
         data = json.dumps({"isTg":"1"})
-        headers = {
-            **self.headers,
-            "Authorization": self.access_tokens[email],
-            "Content-Length": str(len(data)),
-            "Content-Type": "application/json",
-        }
+        headers = self.HEADERS[email].copy()
+        headers["Authorization"] = self.access_tokens[email]
+        headers["Content-Length"] = str(len(data))
+        headers["Content-Type"] = "application/json"
         for attempt in range(retries):
+            proxies = {"http":proxy, "https":proxy} if proxy else None
             try:
-                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxy=proxy, timeout=120, impersonate="chrome110", verify=False)
+                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxies=proxies, timeout=60, impersonate="chrome110", verify=False)
                 response.raise_for_status()
                 return response.json()
             except Exception as e:
@@ -245,7 +236,33 @@ class Kivanet:
                     continue
                 self.log(
                     f"{Fore.CYAN+Style.BRIGHT}Balance   :{Style.RESET_ALL}"
-                    f"{Fore.RED+Style.BRIGHT} GET Earned PTS Failed {Style.RESET_ALL}"
+                    f"{Fore.RED+Style.BRIGHT} Fetch Points Failed {Style.RESET_ALL}"
+                    f"{Fore.MAGENTA+Style.BRIGHT}-{Style.RESET_ALL}"
+                    f"{Fore.YELLOW+Style.BRIGHT} {str(e)} {Style.RESET_ALL}"
+                )
+
+        return None
+    
+    async def sign_info(self, email: str, proxy=None, retries=5):
+        url = f"{self.BASE_API}/api/user/getSignInfo"
+        data = json.dumps({"isTg":"1"})
+        headers = self.HEADERS[email].copy()
+        headers["Authorization"] = self.access_tokens[email]
+        headers["Content-Length"] = str(len(data))
+        headers["Content-Type"] = "application/json"
+        for attempt in range(retries):
+            proxies = {"http":proxy, "https":proxy} if proxy else None
+            try:
+                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxies=proxies, timeout=60, impersonate="chrome110", verify=False)
+                response.raise_for_status()
+                return response.json()
+            except Exception as e:
+                if attempt < retries - 1:
+                    await asyncio.sleep(5)
+                    continue
+                self.log(
+                    f"{Fore.CYAN+Style.BRIGHT}Mining    :{Style.RESET_ALL}"
+                    f"{Fore.RED+Style.BRIGHT} GET Info Failed {Style.RESET_ALL}"
                     f"{Fore.MAGENTA+Style.BRIGHT}-{Style.RESET_ALL}"
                     f"{Fore.YELLOW+Style.BRIGHT} {str(e)} {Style.RESET_ALL}"
                 )
@@ -255,15 +272,14 @@ class Kivanet:
     async def start_mining(self, email: str, proxy=None, retries=5):
         url = f"{self.BASE_API}/api/user/sign"
         data = json.dumps(self.generate_sign_payload())
-        headers = {
-            **self.headers,
-            "Authorization": self.access_tokens[email],
-            "Content-Length": str(len(data)),
-            "Content-Type": "application/json",
-        }
+        headers = self.HEADERS[email].copy()
+        headers["Authorization"] = self.access_tokens[email]
+        headers["Content-Length"] = str(len(data))
+        headers["Content-Type"] = "application/json"
         for attempt in range(retries):
+            proxies = {"http":proxy, "https":proxy} if proxy else None
             try:
-                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxy=proxy, timeout=120, impersonate="chrome110", verify=False)
+                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxies=proxies, timeout=60, impersonate="chrome110", verify=False)
                 response.raise_for_status()
                 return response.json()
             except Exception as e:
@@ -282,15 +298,14 @@ class Kivanet:
     async def task_lists(self, email: str, proxy=None, retries=5):
         url = f"{self.BASE_API}/api/task/getTaskList"
         data = json.dumps({"status":1})
-        headers = {
-            **self.headers,
-            "Authorization": self.access_tokens[email],
-            "Content-Length": str(len(data)),
-            "Content-Type": "application/json",
-        }
+        headers = self.HEADERS[email].copy()
+        headers["Authorization"] = self.access_tokens[email]
+        headers["Content-Length"] = str(len(data))
+        headers["Content-Type"] = "application/json"
         for attempt in range(retries):
+            proxies = {"http":proxy, "https":proxy} if proxy else None
             try:
-                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxy=proxy, timeout=120, impersonate="chrome110", verify=False)
+                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxies=proxies, timeout=60, impersonate="chrome110", verify=False)
                 response.raise_for_status()
                 return response.json()
             except Exception as e:
@@ -309,15 +324,14 @@ class Kivanet:
     async def do_tasks(self, email: str, task_id: str, title: str, proxy=None, retries=5):
         url = f"{self.BASE_API}/api/task/doTask"
         data = json.dumps({"id":task_id})
-        headers = {
-            **self.headers,
-            "Authorization": self.access_tokens[email],
-            "Content-Length": str(len(data)),
-            "Content-Type": "application/json",
-        }
+        headers = self.HEADERS[email].copy()
+        headers["Authorization"] = self.access_tokens[email]
+        headers["Content-Length"] = str(len(data))
+        headers["Content-Type"] = "application/json"
         for attempt in range(retries):
+            proxies = {"http":proxy, "https":proxy} if proxy else None
             try:
-                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxy=proxy, timeout=120, impersonate="chrome110", verify=False)
+                response = await asyncio.to_thread(requests.post, url=url, headers=headers, data=data, proxies=proxies, timeout=60, impersonate="chrome110", verify=False)
                 response.raise_for_status()
                 return response.json()
             except Exception as e:
@@ -348,7 +362,6 @@ class Kivanet:
             
             if rotate_proxy:
                 proxy = self.rotate_proxy_for_account(email)
-                await asyncio.sleep(5)
                 continue
 
             return False
@@ -377,19 +390,21 @@ class Kivanet:
             
             user = await self.user_info(email, proxy)
             if user and user.get("state"):
-                balance = user.get("object").get("allAccount", 0)
+                balance = user.get("object").get("balance") or "N/A"
 
                 self.log(
                     f"{Fore.CYAN+Style.BRIGHT}Balance   :{Style.RESET_ALL}"
                     f"{Fore.WHITE+Style.BRIGHT} {balance} {Style.RESET_ALL}"
                 )
 
-            mining = await self.start_mining(email, proxy)
-            if mining and mining.get("state"):
-                self.log(
-                    f"{Fore.CYAN+Style.BRIGHT}Mining    :{Style.RESET_ALL}"
-                    f"{Fore.GREEN+Style.BRIGHT} Started {Style.RESET_ALL}"
-                )
+            sign = await self.sign_info(email, proxy)
+            if sign:
+                mining = await self.start_mining(email, proxy)
+                if mining and mining.get("state"):
+                    self.log(
+                        f"{Fore.CYAN+Style.BRIGHT}Mining    :{Style.RESET_ALL}"
+                        f"{Fore.GREEN+Style.BRIGHT} Started {Style.RESET_ALL}"
+                    )
                 
             task_lists = await self.task_lists(email, proxy)
             if task_lists and task_lists.get("state"):
@@ -467,12 +482,25 @@ class Kivanet:
                                 f"{Fore.RED+Style.BRIGHT} Invalid Account Data {Style.RESET_ALL}"
                             )
                             continue
+
+                        self.HEADERS[email] = {
+                            "Accept": "*/*",
+                            "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+                            "Language": "en",
+                            "Origin": "https://app.kivanet.com",
+                            "Priority": "u=1, i",
+                            "Referer": "https://app.kivanet.com/",
+                            "Sec-Fetch-Dest": "empty",
+                            "Sec-Fetch-Mode": "cors",
+                            "Sec-Fetch-Site": "same-origin",
+                            "User-Agent": FakeUserAgent().random
+                        }
                             
                         await self.process_accounts(email, password, use_proxy, rotate_proxy)
                         await asyncio.sleep(3)
 
                 self.log(f"{Fore.CYAN + Style.BRIGHT}={Style.RESET_ALL}"*50)
-                seconds = 12 * 60 * 60
+                seconds = 24 * 60 * 60
                 while seconds > 0:
                     formatted_time = self.format_seconds(seconds)
                     print(
